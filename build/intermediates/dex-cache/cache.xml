@@ -1,2 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
-<items version="2" />
+<items version="2" >
+
+    <item
+        jar="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-basement/8.1.0/jars/classes.jar"
+        jumboMode="true"
+        revision="23.0.3"
+        sha1="d0dda274b703dd9c5bb056867649d22b4171ae7d">
+        <dex dex="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/transforms/dex/debug/folders/1000/10/com.google.android.gms-play-services-basement-8.1.0_744daeeec2c7eda5c887c23571dab49435a7ad67/classes.dex" />
+    </item>
+    <item
+        jar="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/incremental-runtime-classes/debug/instant-run.jar"
+        jumboMode="true"
+        revision="23.0.3"
+        sha1="ab980192229ec0defeb05d6ebf94e10a1741c045">
+        <dex dex="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/transforms/dex/debug/folders/1000/10/instant-run_1c7bfa4e27b1627ee9e120b0cb16726a626e5982/classes.dex" />
+    </item>
+    <item
+        jar="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/exploded-aar/com.android.support/support-v4/23.4.0/jars/libs/internal_impl-23.4.0.jar"
+        jumboMode="true"
+        revision="23.0.3"
+        sha1="ea3c07504d2c8f4b13aa17c45c1b68ed9c1c3674">
+        <dex dex="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/transforms/dex/debug/folders/1000/10/internal_impl-23.4.0_7fc0778de54ded75cb36730e884b9db6dcd33560/classes.dex" />
+    </item>
+    <item
+        jar="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/exploded-aar/com.android.support/animated-vector-drawable/23.4.0/jars/classes.jar"
+        jumboMode="true"
+        revision="23.0.3"
+        sha1="de4db3785756bfb0915a9f59a9b3f2fea7407be4">
+        <dex dex="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/transforms/dex/debug/folders/1000/10/com.android.support-animated-vector-drawable-23.4.0_6bb65eae7528ed5cf369c33484ab68960aebc5f2/classes.dex" />
+    </item>
+    <item
+        jar="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.4.0/jars/classes.jar"
+        jumboMode="true"
+        revision="23.0.3"
+        sha1="548f06de403a9409f00554b3ee12a9fdea0e236c">
+        <dex dex="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/transforms/dex/debug/folders/1000/10/com.android.support-appcompat-v7-23.4.0_1214205608444c7e7ee37e90df20f1a3786858ca/classes.dex" />
+    </item>
+    <item
+        jar="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-appindexing/8.1.0/jars/classes.jar"
+        jumboMode="true"
+        revision="23.0.3"
+        sha1="4477ea44f5ec5ad064022a22691732d7638ff197">
+        <dex dex="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/transforms/dex/debug/folders/1000/10/com.google.android.gms-play-services-appindexing-8.1.0_ed7f45e208e49d692e3311bd04137eb861352ffc/classes.dex" />
+    </item>
+    <item
+        jar="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/exploded-aar/com.android.support/support-v4/23.4.0/jars/classes.jar"
+        jumboMode="true"
+        revision="23.0.3"
+        sha1="67bd36ee9340ec7c254108936ad16b24bed160cc">
+        <dex dex="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/transforms/dex/debug/folders/1000/10/com.android.support-support-v4-23.4.0_a1b4101149ace196ac52fe1b4626497838e8ce4e/classes.dex" />
+    </item>
+    <item
+        jar="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/exploded-aar/com.android.support/design/23.4.0/jars/classes.jar"
+        jumboMode="true"
+        revision="23.0.3"
+        sha1="5326d9a850d491714fef8cbfaa9ea3416f0bf0d2">
+        <dex dex="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/transforms/dex/debug/folders/1000/10/com.android.support-design-23.4.0_961a3f4db2e5f7219add01d99e280ea87774656f/classes.dex" />
+    </item>
+    <item
+        jar="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/exploded-aar/com.android.support/recyclerview-v7/23.4.0/jars/classes.jar"
+        jumboMode="true"
+        revision="23.0.3"
+        sha1="ec75036c3c52e451d0cde50a5aedaf5fd32354a0">
+        <dex dex="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/transforms/dex/debug/folders/1000/10/com.android.support-recyclerview-v7-23.4.0_d1e7ebbc0934b9989759b64b8336db48be650325/classes.dex" />
+    </item>
+    <item
+        jar="/home/hayden/Android/Sdk/extras/android/m2repository/com/android/support/support-annotations/23.4.0/support-annotations-23.4.0.jar"
+        jumboMode="true"
+        revision="23.0.3"
+        sha1="ffbe55fdb2bb456b1485831706a9eac3300bb6b8">
+        <dex dex="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/transforms/dex/debug/folders/1000/10/support-annotations-23.4.0_ac693cea6669a41b4f81296e402bde431eb4e2af/classes.dex" />
+    </item>
+    <item
+        jar="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/exploded-aar/com.android.support/support-vector-drawable/23.4.0/jars/classes.jar"
+        jumboMode="true"
+        revision="23.0.3"
+        sha1="c2c594cace5d83a3227b2b6e658ecbfd586d3ed9">
+        <dex dex="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/transforms/dex/debug/folders/1000/10/com.android.support-support-vector-drawable-23.4.0_739a5c911ffb54351208139319d4839c09820f9d/classes.dex" />
+    </item>
+    <item
+        jar="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/incremental-classes/debug/instant-run-bootstrap.jar"
+        jumboMode="true"
+        revision="23.0.3"
+        sha1="fd67dd601db3a9d331b9c783560ae1693035bcd9">
+        <dex dex="/home/hayden/AndroidStudioProjects/Cardio/app/build/intermediates/transforms/dex/debug/folders/1000/10/instant-run-bootstrap_6608fe12f4432ac38d54ee3b5c210eecff6f6e90/classes.dex" />
+    </item>
+
+</items>

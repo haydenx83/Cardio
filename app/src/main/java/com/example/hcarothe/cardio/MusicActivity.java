@@ -1,20 +1,26 @@
 package com.example.hcarothe.cardio;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
+import android.os.BatteryManager;
 import android.os.Bundle;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -25,39 +31,46 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class MusicActivity extends AppCompatActivity implements AudioManager.OnAudioFocusChangeListener {
 
     private static final String TAG = MusicActivity.class.getSimpleName();
-    private MediaPlayer mPlayer;
-    Button buttonPlay, buttonStop, buttonSkip,buttonPrev,buttonExpand, buttonCollapse;
-    ImageView imageCover;
-    TextView songTV, dur;
-    SeekBar progress;
-    String PATH_TO_FILE;
-    private File[] music_files;
-    private int number_of_songs;
-    private int current_song_index;
-    private MediaObserver observer = null;
     private int current_hour, current_minute, current_second, final_hour, final_minute, final_second;
-    AudioManager audioManager;
-    Intent intent;
-    Boolean pauseHumanTriggered;
-    AudioReceiver myAudioReceiver;
-    MediaMetadataRetriever myRetriever;
-    Bitmap bitmap;
-    byte[] data;
-    ListView musicListView;
-    ArrayAdapter<String> musicAdapter;
+    private int number_of_songs, current_song_index, skipTime;
+    private String timeDisplay;
+    private String PATH_TO_FILE;
+    private File[] music_files;
+    private Boolean pauseHumanTriggered, focusLost;
+
+    private Button buttonPlay, buttonStop, buttonSkip,buttonPrev,buttonExpand, buttonCollapse,buttonSettings;
+    private Button buttonForwardTen, buttonForwardThirty, buttonBackTen, buttonBackThirty;
+    private ImageView imageCover,imageForwardTen, imageForwardThirty;
+    private TextView songTV, dur;
+    private SeekBar progress;
+    private RelativeLayout relativeLayout;
+    private ListView musicListView;
+
+    private MediaPlayer mPlayer;
+    private MediaObserver observer = null;
+    private AudioManager audioManager;
+    private Intent intent;
+    private AudioReceiver myAudioReceiver;
+    private MediaMetadataRetriever myRetriever;
+    private ArrayAdapter<String> musicAdapter;
+    private Bitmap bitmap;
+    private byte[] data;
+    private PowerConnectionReceiver myPowerConnectionReceiver;
+    private IntentFilter intentFilter;
+    private IntentFilter batteryFilter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_music);
 
-        pauseHumanTriggered = false;
         current_song_index = 0;
         intent = getIntent();
         PATH_TO_FILE = intent.getExtras().getString("PATH_TO_FILE");
@@ -65,31 +78,50 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
         openMusicFolder();
         Log.d(TAG, "onCreate() Restoring previous state");
 
+        setUp();
+    }
+    private void setUp()
+    {
+        pauseHumanTriggered = false;
+        focusLost = false;
         setUpAudio();
+        setUpSeekBar();
         setUpDisplay();
         setUpAudioFocus();
         setUpButtons();
+        setUpReceivers();
     }
     private void setUpAudio()
     {
         mPlayer = new MediaPlayer();
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        myAudioReceiver = new AudioReceiver();
         myRetriever = new MediaMetadataRetriever();
     }
-    private void setUpDisplay() {
-        progress = (SeekBar) findViewById(R.id.progressBar);
+    private void setUpReceivers()
+    {
+        intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+        batteryFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
 
+        myAudioReceiver = new AudioReceiver();
+        myPowerConnectionReceiver = new PowerConnectionReceiver();
+        registerReceiver(myAudioReceiver, intentFilter);
+        registerReceiver(myPowerConnectionReceiver, batteryFilter);
+    }
+    private void setUpDisplay() {
         imageCover = (ImageView) findViewById(R.id.CoverArt);
         songTV = (TextView) findViewById(R.id.songName);
         dur = (TextView) findViewById(R.id.dur);
     }
+    private void setUpSeekBar() {
+        Drawable drawable = ResourcesCompat.getDrawable(getResources(),R.drawable.progressbar, null);
+        progress = (SeekBar) findViewById(R.id.progressBar);
+        assert progress != null;
+        progress.setProgressDrawable(drawable);
+    }
     private void setUpAudioFocus() {
         int result = audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
-        if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-
-        } else {
+        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             Log.d("AudioManager", "Worked");
             setDataSource(current_song_index % number_of_songs);
         }
@@ -99,14 +131,13 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
         buttonPlay = (Button) findViewById(R.id.play);
         buttonPlay.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
-                if (mPlayer.isPlaying() == false) {
+                if (!mPlayer.isPlaying()) {
                     mPlayer.start();
                     pauseHumanTriggered = false;
                     buttonPlay.setBackgroundResource(android.R.drawable.ic_media_pause);
 
                 } else {
                     mPlayer.pause();
-                    pauseHumanTriggered = true;
                     pauseHumanTriggered = true;
                     buttonPlay.setBackgroundResource(android.R.drawable.ic_media_play);
                 }
@@ -144,6 +175,7 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
                 expandList();
             }
         });
+
         buttonCollapse= (Button) findViewById(R.id.collapse);
         buttonCollapse.setOnClickListener(new OnClickListener() {
 
@@ -151,6 +183,44 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
                 collapseList();
             }
         });
+
+        buttonSettings= (Button) findViewById(R.id.settings);
+
+        buttonForwardTen= (Button) findViewById(R.id.forwardTen);
+        buttonForwardTen.setOnClickListener(new OnClickListener() {
+
+                                                public void onClick(View v) {
+                                                    skipAhead(10000);
+                                                }
+                                            });
+        buttonForwardThirty= (Button) findViewById(R.id.forwardThirty);
+        buttonForwardThirty.setOnClickListener(new OnClickListener() {
+
+            public void onClick(View v) {
+                skipAhead(120000);
+            }
+        });
+
+        buttonBackTen= (Button) findViewById(R.id.prevTen);
+        buttonBackTen.setOnClickListener(new OnClickListener() {
+
+            public void onClick(View v) {
+                skipAhead(-10000);
+            }
+        });
+
+        buttonBackThirty= (Button) findViewById(R.id.prevThirty);
+        buttonBackThirty.setOnClickListener(new OnClickListener() {
+
+            public void onClick(View v) {
+                skipAhead(-30000);
+            }
+        });
+
+        imageForwardTen= (ImageView) findViewById(R.id.imageViewForwardTen);
+        imageForwardThirty= (ImageView) findViewById(R.id.imageViewForwardThirty);
+
+        relativeLayout = (RelativeLayout) findViewById(R.id.musicAct);
     }
 
     private void setDataSource(int song_index) {
@@ -163,21 +233,22 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
 
             if (data != null) {
                 bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-                imageCover.setImageBitmap(bitmap);
+                //imageCover.setImageBitmap(bitmap);
+                imageCover.setBackground(new BitmapDrawable(getResources(), bitmap));
                 Log.d("Bitmap", "Worked");
             } else {
-                bitmap = BitmapFactory.decodeResource(this.getResources(), R.drawable.ic_notification);
-                imageCover.setImageBitmap(bitmap);
+                bitmap = BitmapFactory.decodeResource(this.getResources(), R.drawable.cardio_background);
+                //imageCover.setImageBitmap(bitmap);
+                imageCover.setBackground(new BitmapDrawable(getResources(), bitmap));
                 Log.d("Bitmap", "Didn't not work");
             }
-
             prepareMediaPlayer();
         } catch (IllegalArgumentException e) {
-            //Toast.makeText(getApplicationContext(), "You might not set the URI correctly!", Toast.LENGTH_LONG).show();
+           Log.d("Exception","IllegalArgumentException");
         } catch (SecurityException e) {
-            //Toast.makeText(getApplicationContext(), "You might not set the URI correctly!", Toast.LENGTH_LONG).show();
+            Log.d("Exception","SecurityException");
         } catch (IllegalStateException e) {
-            //Toast.makeText(getApplicationContext(), "You might not set the URI correctly!", Toast.LENGTH_LONG).show();
+            Log.d("Exception","IllegalStateException");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -186,13 +257,17 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
 
     private void prepareMediaPlayer() {
         try {
-            mPlayer.prepare();
-            playMusic();
+            mPlayer.prepareAsync();
         } catch (IllegalStateException e) {
-            //Toast.makeText(getApplicationContext(), "You might not set the URI correctly!", Toast.LENGTH_LONG).show();
-        } catch (IOException e) {
-            //Toast.makeText(getApplicationContext(), "You might not set the URI correctly!", Toast.LENGTH_LONG).show();
+            Log.d("Exception","IllegalStateException");
         }
+        mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            public void onPrepared(MediaPlayer mp) {
+
+                mPlayer.seekTo(0);
+                playMusic();
+            }
+        });
     }
 
     private void openMusicFolder() {
@@ -209,7 +284,7 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
         number_of_songs = local_music_files.length;
         Log.d("open","worked");
         musicListView = (ListView) findViewById(R.id.musicListView);
-        musicAdapter = new ArrayAdapter<String>(this, R.layout.activity_listview, music_names);
+        musicAdapter = new ArrayAdapter<>(this, R.layout.activity_musiclistview, music_names);
 
         musicListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -227,7 +302,15 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
         buttonStop.setVisibility(View.INVISIBLE);
         progress.setVisibility(View.INVISIBLE);
         buttonCollapse.setVisibility(View.VISIBLE);
+        buttonSettings.setVisibility(View.INVISIBLE);
         buttonExpand.setVisibility(View.INVISIBLE);
+        buttonForwardThirty.setVisibility(View.INVISIBLE);
+        buttonForwardTen.setVisibility(View.INVISIBLE);
+        buttonBackTen.setVisibility(View.INVISIBLE);
+        buttonBackThirty.setVisibility(View.INVISIBLE);
+        imageForwardTen.setVisibility(View.INVISIBLE);
+        imageForwardThirty.setVisibility(View.INVISIBLE);
+
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
                 ActionBar.LayoutParams.MATCH_PARENT,
                 ActionBar.LayoutParams.MATCH_PARENT
@@ -235,6 +318,7 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
 
         params.addRule(RelativeLayout.BELOW, R.id.collapse);
         musicListView.setLayoutParams(params);
+        relativeLayout.setBackgroundColor(getResources().getColor(R.color.button_material_light));
     }
 
     private void collapseList()
@@ -245,15 +329,23 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
         buttonStop.setVisibility(View.VISIBLE);
         progress.setVisibility(View.VISIBLE);
         buttonCollapse.setVisibility(View.INVISIBLE);
+        buttonSettings.setVisibility(View.VISIBLE);
         buttonExpand.setVisibility(View.VISIBLE);
+        buttonForwardThirty.setVisibility(View.VISIBLE);
+        buttonForwardTen.setVisibility(View.VISIBLE);
+        buttonBackTen.setVisibility(View.VISIBLE);
+        buttonBackThirty.setVisibility(View.VISIBLE);
+        imageForwardTen.setVisibility(View.VISIBLE);
+        imageForwardThirty.setVisibility(View.VISIBLE);
+
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
                 ActionBar.LayoutParams.MATCH_PARENT,
                 ActionBar.LayoutParams.MATCH_PARENT
         );
 
         params.addRule(RelativeLayout.BELOW, R.id.expand);
-//        params.addRule(RelativeLayout., R.id.musicAct);
         musicListView.setLayoutParams(params);
+        relativeLayout.setBackgroundColor(0xff33b5e5);
     }
 
     @Override
@@ -261,8 +353,8 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
         switch (focusChange) {
             case AudioManager.AUDIOFOCUS_GAIN:
                 // resume playback
-                if (pauseHumanTriggered == false) {
-                    Log.d("AudioManager", "Untriggered");
+                if (!pauseHumanTriggered) {
+                    Log.d("AudioManager", "trigger removed");
                     if (mPlayer == null) {
                         Log.d("mPlayer", "works");
                         setDataSource(current_song_index);
@@ -275,9 +367,10 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
 
             case AudioManager.AUDIOFOCUS_LOSS:
                 // Lost focus for an unbounded amount of time: stop playback and release media player
-                if (mPlayer.isPlaying()) mPlayer.stop();
-                mPlayer.release();
-                mPlayer = null;
+                if (mPlayer.isPlaying()) {
+                    closeListeners();
+                    focusLost = true;
+                }
                 break;
 
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
@@ -290,16 +383,20 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
 
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                 // Lost focus for a short time, but it's ok to keep playing
-                // at an attenuated level
-                if (mPlayer.isPlaying()) mPlayer.setVolume(0.1f, 0.1f);
-                Log.d("AudioManager", "Triggered");
+                // at an attenuated level\
+                if( mPlayer != null) {
+                    if (mPlayer.isPlaying()) {
+                        mPlayer.setVolume(0.1f, 0.1f);
+                        Log.d("AudioManager", "Triggered");
+                    }
+                }
                 break;
         }
 
     }
 
     private class MediaObserver implements Runnable {
-        private AtomicBoolean stop = new AtomicBoolean(false);
+        private final AtomicBoolean stop = new AtomicBoolean(false);
 
         public void stop() {
             stop.set(true);
@@ -307,24 +404,24 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
 
         @Override
         public void run() {
-            while (!stop.get() && mPlayer != null) {
-                progress.setProgress(mPlayer.getCurrentPosition());
-
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+            while (!stop.get()) {
+                if(mPlayer != null) {
+                    progress.setProgress(mPlayer.getCurrentPosition());
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
     }
 
     ///////starts media player/////////
-    public void playMusic() {
+    private void playMusic() {
         mPlayer.start();
         observer = new MediaObserver();
         new Thread(observer).start();
-        registerReceiver(myAudioReceiver, intentFilter);
         progress.setMax(mPlayer.getDuration());
         final_second = mPlayer.getDuration() / 1000;
         final_hour = final_second / 3600;
@@ -332,24 +429,28 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
         final_second = final_second % 60;
         songTV.setText(music_files[current_song_index].getName());
 
+        Log.d("Duration: ", "" + mPlayer.getDuration());
 
         progress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             int progressChanged = 0;
 
-
+            @SuppressLint("SetTextI18n")
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 progressChanged = progress;
-                current_second = progress / 1000;
-                current_hour = current_second / 3600;
-                current_minute = (current_second % 3600) / 60;
-                current_second = current_second % 60;
 
-                dur.setText(current_hour + ":" + (current_minute < 10 ? "0" : "") + current_minute + ":" + (current_second < 10 ? "0" : "") + current_second
-                        + "/" + final_hour + ":" + (final_minute < 10 ? "0" : "") + final_minute + ":" + (final_second < 10 ? "0" : "") + final_second);
+                current_second = (int) (progressChanged / 1000) % 60 ;
+                current_minute = (int) ((progressChanged / (1000*60)) % 60);
+                current_hour   = (int) ((progressChanged / (1000*60*60)) % 24);
+
+                timeDisplay = current_hour + ":" + (current_minute < 10 ? "0" : "") + current_minute + ":" + (current_second < 10 ? "0" : "") + current_second
+                        + "/" + final_hour + ":" + (final_minute < 10 ? "0" : "") + final_minute + ":" + (final_second < 10 ? "0" : "") + final_second;
+
+                dur.setText(timeDisplay);
 
                 if (fromUser) {
                     mPlayer.seekTo(progressChanged);
                 }
+
             }
 
             public void onStartTrackingTouch(SeekBar seekBar) {
@@ -363,9 +464,7 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
 
         mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             public void onCompletion(MediaPlayer mp) {
-                mp.reset();
-                observer.stop();
-                setDataSource(++current_song_index % number_of_songs);
+                nextSong();
             }
         });
     }
@@ -374,58 +473,125 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
         @Override
         public void onReceive(Context context, Intent intent) {
             if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
-                mPlayer.pause();
+                if( mPlayer != null) {
+                    if (mPlayer.isPlaying()) {
+                        mPlayer.pause();
+                        buttonPlay.setBackgroundResource(android.R.drawable.ic_media_play);
+                        pauseHumanTriggered = true;
+                    }
+                }
             }
         }
     }
 
-    private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+    public class PowerConnectionReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context , Intent intent) {
+            int status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+            Log.d("Power","Receiver Runs");
+            if(status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                    status == BatteryManager.BATTERY_STATUS_FULL) {
+                Log.d("Power","Flag On");
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            }
+            else {
+                Log.d("Power","Flag Off");
+                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            }
+        }
+    }
 
     private void nextSong()
     {
         if (mPlayer != null) {
-            if (mPlayer.isPlaying() == false) {
+            if (!mPlayer.isPlaying()) {
                 buttonPlay.setBackgroundResource(android.R.drawable.ic_media_pause);
             }
-            mPlayer.reset();
             observer.stop();
-            musicListView.setSelection(current_song_index + 1);
-            setDataSource(++current_song_index % number_of_songs);
+            mPlayer.reset();
+
+            if(current_song_index == number_of_songs -1)
+            {
+                current_song_index = 0;
+            }
+            else
+            {
+                current_song_index++;
+            }
+            musicListView.setSelection(current_song_index);
+            setDataSource(current_song_index);
         }
     }
 
     private void prevSong()
     {
         if (mPlayer != null) {
-            if (mPlayer.isPlaying() == false) {
+            if (!mPlayer.isPlaying()) {
                 buttonPlay.setBackgroundResource(android.R.drawable.ic_media_pause);
             }
-            mPlayer.reset();
             observer.stop();
+            mPlayer.reset();
+
             if(current_song_index <= 0)
             {
                 current_song_index = number_of_songs - 1;
-                musicListView.setSelection(current_song_index);
-                setDataSource(current_song_index % number_of_songs);
             }
             else {
-                musicListView.setSelection(current_song_index - 1);
-                setDataSource(--current_song_index % number_of_songs);
+                current_song_index--;
             }
+            musicListView.setSelection(current_song_index);
+            setDataSource(current_song_index);
+        }
+    }
+    private void skipAhead(int skip)
+    {
+        skipTime = 0;
+        if(mPlayer != null) {
+            skipTime = mPlayer.getCurrentPosition();
+            Log.d("Skip Float",""+ (float)mPlayer.getCurrentPosition());
+            Log.d("Skip Int", "" + (int)mPlayer.getCurrentPosition());
+            if (skipTime + skip > mPlayer.getDuration()) {
+                return;
+            }
+            else if(skipTime < 0)
+            {
+                mPlayer.seekTo(0);
+            }
+            else {
+                mPlayer.seekTo(skipTime + skip);
+            }
+        }
+    }
+
+    public void onResume() {
+        super .onResume();
+        if(focusLost)
+        {
+          setUp();
         }
     }
 
     public void onDestroy() {
         super.onDestroy();
+        closeListeners();
+    }
+    private void closeListeners()
+    {
+        if (observer != null) observer.stop();
         if (mPlayer != null)
         {
             mPlayer.stop();
+            mPlayer.reset();
             mPlayer.release();
+            mPlayer = null;
         }
-        if (observer != null) observer.stop();
+
         if (audioManager != null) audioManager.abandonAudioFocus(this);
         unregisterReceiver(myAudioReceiver);
+        unregisterReceiver(myPowerConnectionReceiver);
         myRetriever.release();
+        myRetriever = null;
+        observer = null;
     }
 }
 

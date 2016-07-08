@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">Cardio</string>
-    <string name="title_activity_main">MainActivity</string>
-    <string name="title_activity_music">MusicActivity</string>
+    <string name="desc">ImageDescription</string>
+    <string name="title_duration">Duration</string>
+    <string name="title_expand">Expand Track</string>
+    <string name="title_close">Close Track</string>
+    <string name="settings">Setting</string>
 </resources>
