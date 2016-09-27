@@ -4,13 +4,13 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".MusicActivity"
-    android:background="@android:color/holo_blue_light"
+    android:background="@drawable/hexagon"
     android:id="@+id/musicAct"
     android:gravity="bottom">
 
     <ImageView
-        android:layout_width="300dp"
-        android:layout_height="300dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:id="@+id/CoverArt"
         android:layout_alignParentTop="false"
         android:layout_alignParentLeft="false"
@@ -21,9 +21,10 @@
         android:layout_alignEnd="@+id/songName"
         android:contentDescription="@string/desc"
         android:padding="50dp"
+        android:layout_alignTop="@+id/play"
+        android:layout_alignBottom="@+id/skip"
         android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:layout_marginTop="20dp" />
+        android:layout_marginRight="20dp" />
 
     <ImageView
         android:layout_width="wrap_content"
@@ -44,11 +45,12 @@
         android:focusableInTouchMode="true"
         android:id="@+id/songName"
         android:visibility="visible"
-        android:textColor="@android:color/black"
+        android:textColor="@android:color/white"
         android:textAlignment="center"
         android:layout_below="@+id/prev"
         android:layout_toEndOf="@+id/imageView"
-        android:textSize="25sp" />
+        android:textSize="25sp"
+        android:textStyle="bold" />
 
     <TextView
         android:layout_width="fill_parent"
@@ -89,7 +91,7 @@
         android:thumb="@null"/>
 
     <Button
-        android:layout_width="175dp"
+        android:layout_width="180dp"
         android:layout_height="@dimen/buttonDimension"
         android:id="@+id/play"
         android:background="@android:drawable/ic_media_pause"
@@ -99,17 +101,18 @@
         android:layout_alignParentStart="true" />
 
     <Button
-        android:layout_width="175dp"
+        android:layout_width="180dp"
         android:layout_height="@dimen/buttonDimension"
         android:id="@+id/stop"
         android:background="@drawable/stop"
         android:padding="0dp"
         android:layout_alignBottom="@+id/play"
         android:layout_alignParentTop="true"
-        android:layout_toRightOf="@+id/play" />
+        android:layout_toRightOf="@+id/play"
+        android:layout_alignParentEnd="true" />
 
     <Button
-        android:layout_width="175dp"
+        android:layout_width="180dp"
         android:layout_height="@dimen/buttonDimension"
         android:id="@+id/skip"
         android:background="@android:drawable/ic_media_next"
@@ -121,13 +124,14 @@
         android:layout_alignBottom="@+id/prev" />
 
     <Button
-        android:layout_width="175dp"
+        android:layout_width="180dp"
         android:layout_height="@dimen/buttonDimension"
         android:id="@+id/prev"
         android:background="@android:drawable/ic_media_previous"
         android:visibility="visible"
         android:layout_below="@+id/play"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:layout_toStartOf="@+id/stop" />
 
     <Button
         android:layout_width="wrap_content"
@@ -169,7 +173,7 @@
         android:layout_above="@+id/expand"
         android:textSize="25dp"
         android:textStyle="bold"
-        android:text="30"
+        android:text="45"
         android:textColor="@android:color/black"/>
 
     <Button
@@ -183,7 +187,7 @@
         android:textSize="25dp"
         android:textStyle="bold"
         android:textColor="@android:color/black"
-        android:text="10" />
+        android:text="15" />
 
     <Button
         android:layout_width="wrap_content"
@@ -192,7 +196,7 @@
         android:layout_alignTop="@+id/prevTen"
         android:layout_toEndOf="@+id/prevTen"
         android:layout_above="@+id/expand"
-        android:text="10"
+        android:text="15"
         android:background="@android:color/transparent"
         android:textStyle="bold"
         android:textSize="25dp"
@@ -207,7 +211,7 @@
         android:layout_toEndOf="@+id/forwardTen"
         android:layout_alignTop="@+id/forwardTen"
         android:textColor="@android:color/black"
-        android:text="30"
+        android:text="45"
         android:textStyle="bold"
         android:textSize="25dp" />
 

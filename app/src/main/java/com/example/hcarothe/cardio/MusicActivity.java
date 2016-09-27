@@ -17,21 +17,27 @@ import android.os.Bundle;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.ListPopupWindow;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.TextView;
+
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -43,15 +49,18 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
     private String timeDisplay;
     private String PATH_TO_FILE;
     private File[] music_files;
-    private Boolean pauseHumanTriggered, focusLost;
+    private Boolean pauseHumanTriggered, focusLost, repeatTrack, repeatSetlist, randomizer, trackPicker;
+    private Random randomGenerator;
 
     private Button buttonPlay, buttonStop, buttonSkip,buttonPrev,buttonExpand, buttonCollapse,buttonSettings;
     private Button buttonForwardTen, buttonForwardThirty, buttonBackTen, buttonBackThirty;
-    private ImageView imageCover,imageForwardTen, imageForwardThirty;
+    private Switch switchRandomizer, switchRepeatTrack, switchRepeatSetlist;
+    private ImageView imageCover, imageForwardTen, imageForwardThirty;
     private TextView songTV, dur;
     private SeekBar progress;
     private RelativeLayout relativeLayout;
     private ListView musicListView;
+    private View popupView;
 
     private MediaPlayer mPlayer;
     private MediaObserver observer = null;
@@ -65,6 +74,8 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
     private PowerConnectionReceiver myPowerConnectionReceiver;
     private IntentFilter intentFilter;
     private IntentFilter batteryFilter;
+    private ListPopupWindow trackPopUpWindow;
+    private PopupWindow settingPopUpWindow;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -84,12 +95,39 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
     {
         pauseHumanTriggered = false;
         focusLost = false;
+        repeatSetlist = false;
+        repeatTrack = false;
+        randomizer = false;
+        trackPicker = false;
+        randomGenerator = new Random();
+
         setUpAudio();
         setUpSeekBar();
         setUpDisplay();
         setUpAudioFocus();
+        setUpTrack();
         setUpButtons();
+        setupSwitch();
         setUpReceivers();
+    }
+    private void setUpTrack() {
+        Context context = findViewById(R.id.musicAct).getContext();
+        trackPopUpWindow = new ListPopupWindow(context);
+        trackPopUpWindow.setWidth(getResources().getDisplayMetrics().widthPixels);
+        trackPopUpWindow.setModal(true);
+        trackPopUpWindow.setAdapter(musicAdapter);
+
+        LayoutInflater layoutInflater
+                = (LayoutInflater)getBaseContext()
+                .getSystemService(LAYOUT_INFLATER_SERVICE);
+
+        popupView = layoutInflater.inflate(R.layout.settings_popup, null);
+        settingPopUpWindow = new PopupWindow(
+                popupView,
+                ActionBar.LayoutParams.WRAP_CONTENT,
+                ActionBar.LayoutParams.WRAP_CONTENT);
+
+        settingPopUpWindow.setWidth(getResources().getDisplayMetrics().widthPixels);
     }
     private void setUpAudio()
     {
@@ -172,32 +210,50 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
         buttonExpand.setOnClickListener(new OnClickListener() {
 
             public void onClick(View v) {
-                expandList();
+                trackPopUpWindow.setAnchorView(v);
+
+                trackPopUpWindow.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        current_song_index = position;
+                        trackPicker = true;
+                        nextSong();
+                        trackPopUpWindow.dismiss();
+                        Log.d("PopUP",""+ parent.getItemAtPosition(position));
+                    }
+                });
+                trackPopUpWindow.show();
+                trackPopUpWindow.setSelection(current_song_index);
             }
         });
 
-        buttonCollapse= (Button) findViewById(R.id.collapse);
-        buttonCollapse.setOnClickListener(new OnClickListener() {
-
-            public void onClick(View v) {
-                collapseList();
-            }
-        });
 
         buttonSettings= (Button) findViewById(R.id.settings);
+        buttonSettings.setOnClickListener(new OnClickListener() {
+
+            public void onClick(View v) {
+                if(settingPopUpWindow.isShowing()) {
+                    settingPopUpWindow.dismiss();
+                }
+                else
+                {
+                    settingPopUpWindow.showAsDropDown(buttonSettings);
+                }
+            }
+        });
 
         buttonForwardTen= (Button) findViewById(R.id.forwardTen);
         buttonForwardTen.setOnClickListener(new OnClickListener() {
 
                                                 public void onClick(View v) {
-                                                    skipAhead(10000);
+                                                    skipAhead(15000);
                                                 }
                                             });
         buttonForwardThirty= (Button) findViewById(R.id.forwardThirty);
         buttonForwardThirty.setOnClickListener(new OnClickListener() {
 
             public void onClick(View v) {
-                skipAhead(120000);
+                skipAhead(45000);
             }
         });
 
@@ -205,7 +261,7 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
         buttonBackTen.setOnClickListener(new OnClickListener() {
 
             public void onClick(View v) {
-                skipAhead(-10000);
+                skipAhead(-15000);
             }
         });
 
@@ -213,7 +269,7 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
         buttonBackThirty.setOnClickListener(new OnClickListener() {
 
             public void onClick(View v) {
-                skipAhead(-30000);
+                skipAhead(-45000);
             }
         });
 
@@ -221,6 +277,30 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
         imageForwardThirty= (ImageView) findViewById(R.id.imageViewForwardThirty);
 
         relativeLayout = (RelativeLayout) findViewById(R.id.musicAct);
+    }
+    private void setupSwitch()
+    {
+        switchRandomizer= (Switch) popupView.findViewById(R.id.randomizerToggle);
+        switchRandomizer.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                randomizer = isChecked;
+            }
+        });
+        switchRepeatTrack= (Switch) popupView.findViewById(R.id.repeatTrackToggle);
+        switchRepeatTrack.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                repeatTrack = isChecked;
+            }
+        });
+        switchRepeatSetlist= (Switch) popupView.findViewById(R.id.repeatSetlistToggle);
+        switchRepeatSetlist.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                repeatSetlist = isChecked;
+            }
+        });
     }
 
     private void setDataSource(int song_index) {
@@ -272,16 +352,16 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
 
     private void openMusicFolder() {
         Log.d("Files", "Path: " + PATH_TO_FILE);
-        File local_music_files[] = new File(PATH_TO_FILE).listFiles();
-        String music_names[] = new String[local_music_files.length];
-        Log.d("Files", "Size: " + local_music_files.length);
+        music_files = new File(PATH_TO_FILE).listFiles();
+        number_of_songs = music_files.length;
+        String music_names[] = new String[number_of_songs];
+        Log.d("Files", "Size: " + number_of_songs);
 
-        for (int i = 0; i < local_music_files.length; i++) {
-            Log.d("Files", "FileName:" + local_music_files[i].getName());
-            music_names[i] = local_music_files[i].getName();
+        for (int i = 0; i < number_of_songs; i++) {
+            Log.d("Files", "FileName:" + music_files[i].getName());
+            music_names[i] = music_files[i].getName();
         }
-        music_files = local_music_files;
-        number_of_songs = local_music_files.length;
+
         Log.d("open","worked");
         musicListView = (ListView) findViewById(R.id.musicListView);
         musicAdapter = new ArrayAdapter<>(this, R.layout.activity_musiclistview, music_names);
@@ -294,60 +374,6 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
         });
         musicListView.setAdapter(musicAdapter);
     }
-    private void expandList()
-    {
-        buttonPlay.setVisibility(View.INVISIBLE);
-        buttonPrev.setVisibility(View.INVISIBLE);
-        buttonSkip.setVisibility(View.INVISIBLE);
-        buttonStop.setVisibility(View.INVISIBLE);
-        progress.setVisibility(View.INVISIBLE);
-        buttonCollapse.setVisibility(View.VISIBLE);
-        buttonSettings.setVisibility(View.INVISIBLE);
-        buttonExpand.setVisibility(View.INVISIBLE);
-        buttonForwardThirty.setVisibility(View.INVISIBLE);
-        buttonForwardTen.setVisibility(View.INVISIBLE);
-        buttonBackTen.setVisibility(View.INVISIBLE);
-        buttonBackThirty.setVisibility(View.INVISIBLE);
-        imageForwardTen.setVisibility(View.INVISIBLE);
-        imageForwardThirty.setVisibility(View.INVISIBLE);
-
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
-                ActionBar.LayoutParams.MATCH_PARENT,
-                ActionBar.LayoutParams.MATCH_PARENT
-        );
-
-        params.addRule(RelativeLayout.BELOW, R.id.collapse);
-        musicListView.setLayoutParams(params);
-        relativeLayout.setBackgroundColor(getResources().getColor(R.color.button_material_light));
-    }
-
-    private void collapseList()
-    {
-        buttonPlay.setVisibility(View.VISIBLE);
-        buttonPrev.setVisibility(View.VISIBLE);
-        buttonSkip.setVisibility(View.VISIBLE);
-        buttonStop.setVisibility(View.VISIBLE);
-        progress.setVisibility(View.VISIBLE);
-        buttonCollapse.setVisibility(View.INVISIBLE);
-        buttonSettings.setVisibility(View.VISIBLE);
-        buttonExpand.setVisibility(View.VISIBLE);
-        buttonForwardThirty.setVisibility(View.VISIBLE);
-        buttonForwardTen.setVisibility(View.VISIBLE);
-        buttonBackTen.setVisibility(View.VISIBLE);
-        buttonBackThirty.setVisibility(View.VISIBLE);
-        imageForwardTen.setVisibility(View.VISIBLE);
-        imageForwardThirty.setVisibility(View.VISIBLE);
-
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
-                ActionBar.LayoutParams.MATCH_PARENT,
-                ActionBar.LayoutParams.MATCH_PARENT
-        );
-
-        params.addRule(RelativeLayout.BELOW, R.id.expand);
-        musicListView.setLayoutParams(params);
-        relativeLayout.setBackgroundColor(0xff33b5e5);
-    }
-
     @Override
     public void onAudioFocusChange(int focusChange) {
         switch (focusChange) {
@@ -509,15 +535,23 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
             }
             observer.stop();
             mPlayer.reset();
-
-            if(current_song_index == number_of_songs -1)
-            {
-                current_song_index = 0;
+            Log.d("Next Song","repeat " + repeatTrack);
+            Log.d("Next Song","randomizer1 " + randomizer);
+            if(!trackPicker) {
+                if (!repeatTrack) {
+                    if (randomizer) {
+                        Log.d("Next Song", "randomizer2 " + randomizer);
+                        current_song_index = randomGenerator.nextInt(number_of_songs - 1);
+                    } else {
+                        if (current_song_index == number_of_songs - 1) {
+                            current_song_index = 0;
+                        } else {
+                            current_song_index++;
+                        }
+                    }
+                }
             }
-            else
-            {
-                current_song_index++;
-            }
+            trackPicker = false;
             musicListView.setSelection(current_song_index);
             setDataSource(current_song_index);
         }
@@ -531,13 +565,19 @@ public class MusicActivity extends AppCompatActivity implements AudioManager.OnA
             }
             observer.stop();
             mPlayer.reset();
+            if(!trackPicker) {
+                if (!repeatTrack) {
+                    if (randomizer) {
+                        current_song_index = randomGenerator.nextInt(number_of_songs - 1);
+                    } else {
+                        if (current_song_index <= 0) {
+                            current_song_index = number_of_songs - 1;
+                        } else {
+                            current_song_index--;
+                        }
 
-            if(current_song_index <= 0)
-            {
-                current_song_index = number_of_songs - 1;
-            }
-            else {
-                current_song_index--;
+                    }
+                }
             }
             musicListView.setSelection(current_song_index);
             setDataSource(current_song_index);

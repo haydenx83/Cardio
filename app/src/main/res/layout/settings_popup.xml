@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:background="@android:color/holo_blue_dark"
+    android:paddingTop="@dimen/toggleDimension">
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=" Repeat Track: "
+        android:id="@+id/repeatTrackToggle"
+        android:layout_gravity="center_horizontal"
+        android:textSize="@dimen/toggleDimension"
+        android:layout_marginBottom="@dimen/toggleDimension" />
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Repeat Setlist: "
+        android:id="@+id/repeatSetlistToggle"
+        android:layout_gravity="center_horizontal"
+        android:textSize="@dimen/toggleDimension"
+        android:layout_marginBottom="@dimen/toggleDimension" />
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="   Randomizer: "
+        android:id="@+id/randomizerToggle"
+        android:layout_gravity="center_horizontal"
+        android:textSize="@dimen/toggleDimension"
+        android:layout_marginBottom="@dimen/toggleDimension" />
+</LinearLayout>
